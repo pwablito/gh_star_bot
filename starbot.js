@@ -26,12 +26,17 @@ async function main() {
         username: args.user,
     });
     data.data.forEach(item => {
-        console.log(item.name);
+        octokit.rest.activity.starRepoForAuthenticatedUser({
+            owner: item.owner.login,
+            repo: item.name,
+        }).then(() => {
+            console.log(`Starred ${item.name}`);
+        }).catch((err) => {
+            console.error(err);
+        });
     });
 }
 
-main().then(() => {
-
-}).catch((e) => {
+main().then(() => {}).catch((e) => {
     console.error(e);
 });
