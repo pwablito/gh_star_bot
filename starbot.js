@@ -22,19 +22,28 @@ async function main() {
         userAgent: 'starbot'
     });
 
-    let data = await octokit.rest.repos.listForUser({
-        username: args.user,
+    let users = [];
+
+    users.push(args.user);
+    let data = await octokit.users.listFollowingForUser({
+        username: args.user
     });
-    data.data.forEach(item => {
-        octokit.rest.activity.starRepoForAuthenticatedUser({
-            owner: item.owner.login,
-            repo: item.name,
-        }).then(() => {
-            console.log(`Starred ${item.name}`);
-        }).catch((err) => {
-            console.error(err);
+    users = users.concat(data.data.map(user => user.login));
+    for (let user of users) {
+        data = await octokit.rest.repos.listForUser({
+            username: user,
         });
-    });
+        data.data.forEach(item => {
+            octokit.rest.activity.starRepoForAuthenticatedUser({
+                owner: item.owner.login,
+                repo: item.name,
+            }).then(() => {
+                console.log(`Starred ${item.full_name}`);
+            }).catch((err) => {
+                console.error(err);
+            });
+        });
+    }
 }
 
 main().then(() => {}).catch((e) => {
