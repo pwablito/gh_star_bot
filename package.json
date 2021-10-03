@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@octokit/rest": "^18.11.4",
+    "argparse": "^2.0.1"
+  }
+}
