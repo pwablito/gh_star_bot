@@ -2,10 +2,9 @@
 
 'use strict';
 
-
-const { ArgumentParser } = require('argparse');
 const { Octokit } = require("@octokit/rest");
-
+const { ArgumentParser } = require('argparse');
+const { get_users, get_starred_repos_for_user } = require('./github_util');
 
 async function main() {
     const parser = new ArgumentParser({
@@ -22,28 +21,22 @@ async function main() {
         userAgent: 'starbot'
     });
 
-    let users = [];
+    let users = await get_users(octokit, args.user);
 
-    users.push(args.user);
-    let data = await octokit.users.listFollowingForUser({
-        username: args.user
-    });
-    users = users.concat(data.data.map(user => user.login));
+    let repos = [];
     for (let user of users) {
-        data = await octokit.rest.repos.listForUser({
-            username: user,
-        });
-        data.data.forEach(item => {
-            octokit.rest.activity.starRepoForAuthenticatedUser({
-                owner: item.owner.login,
-                repo: item.name,
-            }).then(() => {
-                console.log(`Starred ${item.full_name}`);
-            }).catch((err) => {
-                console.error(err);
-            });
-        });
+        repos = repos.concat(await get_starred_repos_for_user(octokit, user));
     }
+    repos.forEach(repo => {
+        octokit.rest.activity.starRepoForAuthenticatedUser({
+            owner: repo.owner.login,
+            repo: repo.name,
+        }).then(() => {
+            console.log(`Starred ${repo.name}`);
+        }).catch((err) => {
+            console.error(err);
+        });
+    });
 }
 
 main().then(() => {}).catch((e) => {
